@@ -162,10 +162,10 @@ locals {
 
 resource "azuread_user" "user" {
 
-  user_principal_name = format("%s%s", var.username, local.user_common["user_principal_domain"])
+  user_principal_name = format("%s@%s", var.username, local.user_common["user_principal_domain"])
   display_name        = var.username
-  mail_nickname       = format("%s%s", var.username, local.user_common["display_name_ext"])
-  mail                = format("%s%s", var.username, local.user_common["user_principal_domain"])
+  mail_nickname       = format("%s@%s", var.username, local.user_common["display_name_ext"])
+  mail                = format("%s@%s", var.username, local.user_common["user_principal_domain"])
   password            = local.user_common["password"]
   account_enabled     = local.user_common["account_enabled"]
   usage_location      = local.user_common["usage_location"]
