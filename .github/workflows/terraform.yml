@@ -101,6 +101,6 @@ jobs:
             } else {
                 $userNum = $_.ToString()
             }
-            Write-Host "${{ github.event.inputs.UserPrefix }}$userNum${{ github.event.inputs.UserDomain }}," (New-MgUserAuthenticationTemporaryAccessPassMethod -UserId "${{ github.event.inputs.UserPrefix }}$userNum${{ github.event.inputs.UserDomain }}" -LifetimeInMinutes (${{ github.event.inputs.DurationDays }} * 1440) -StartDateTime $StartDateTime).TemporaryAccessPass
+            Write-Host "${{ vars.ENV_USERNAME_PREFIX }}$userNum${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}," (New-MgUserAuthenticationTemporaryAccessPassMethod -UserId "${{ vars.ENV_USERNAME_PREFIX }}$userNum${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}" -LifetimeInMinutes (5 * 1440) -StartDateTime $StartDateTime).TemporaryAccessPass
             }
           azPSVersion: "latest"
