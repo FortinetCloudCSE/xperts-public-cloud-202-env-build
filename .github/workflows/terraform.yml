@@ -11,7 +11,7 @@ on:
       UserStart:
         description: 'Starting index for user numbering'
         required: false
-        default: '10'
+        default: '20'
         type: string
 jobs:
   terraform:
