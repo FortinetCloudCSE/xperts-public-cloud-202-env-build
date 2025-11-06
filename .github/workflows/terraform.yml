@@ -1,4 +1,4 @@
-name: Terraform Azure Deployment
+name: Terraform Azure Deployment - Public Cloud 202 Env Build
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
         default: '20'
         type: string
 jobs:
-  terraform:
+  ENV_BUILD:
     permissions:
       id-token: write
       contents: read
@@ -87,8 +87,9 @@ jobs:
         working-directory: ./terraform
         run: terraform output bastion_shareable_link -no-color
 
-      - name: New User TAP
+      - name: PowerShell New User TAP
         uses: azure/powershell@v2
+        if: (github.event.inputs.UserCount != '0')
         with:
           inlineScript: |
             $token = (Get-AzAccessToken -ResourceTypeName MSGraph -AsSecureString -ErrorAction Stop).token
