@@ -24,6 +24,7 @@ jobs:
     steps:
       - name: ENV Build Values
         run: |
+
           echo "user_count:            ${{ github.event.inputs.UserCount }}"
           echo "user_start:            ${{ github.event.inputs.UserStart }}"
           echo "username_prefix:       ${{ vars.ENV_USERNAME_PREFIX }}"
