@@ -22,18 +22,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Collapsible group example
         run: |
           echo "::group::Env Build Values"
-          echo"vm_username: ${{ vars.ENV_VM_USERNAME }}"
-          echo"username_prefix: ${{ vars.ENV_USERNAME_PREFIX }}"
-          echo"user_count: ${{ github.event.inputs.UserCount }}"
-          echo"user_start: ${{ github.event.inputs.UserStart }}"
-          echo"rg_suffix: ${{ vars.ENV_RG_SUFFIX }}"
-          echo"location: ${{ vars.ENV_LOCATION }}"
-          echo"password: ${{ vars.ENV_BASIC_PASSWORD }}"
-          echo"user_principal_domain: ${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}"
+          echo "vm_username:           ${{ vars.ENV_VM_USERNAME }}"
+          echo "username_prefix:       ${{ vars.ENV_USERNAME_PREFIX }}"
+          echo "user_count:            ${{ github.event.inputs.UserCount }}"
+          echo "user_start:            ${{ github.event.inputs.UserStart }}"
+          echo "rg_suffix:             ${{ vars.ENV_RG_SUFFIX }}"
+          echo "location:              ${{ vars.ENV_LOCATION }}"
+          echo "password:              ${{ vars.ENV_BASIC_PASSWORD }}"
+          echo "user_principal_domain: ${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}"
           echo "::endgroup::"
 
       - name: Checkout repository
