@@ -99,6 +99,14 @@ jobs:
         working-directory: ./terraform
         run: terraform output bastion_shareable_link -no-color
 
+      - name: Azure Re-Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
       - name: PowerShell New User TAP
         uses: azure/powershell@v2
         if: (github.event.inputs.UserCount != '0')
