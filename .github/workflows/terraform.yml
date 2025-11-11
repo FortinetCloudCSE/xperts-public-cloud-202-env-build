@@ -98,12 +98,12 @@ jobs:
           TF_VAR_public_cloud_202_group_object_id: ${{ secrets.AZURE_PUBLIC_CLOUD_202_GROUP_OBJECT_ID }}
 
       - name: Terraform Output
-        if: (github.event.inputs.RunTAP == 'true')
         id: output
         working-directory: ./terraform
         run: terraform output bastion_shareable_link -no-color
 
       - name: Azure Re-Login
+        if: (github.event.inputs.RunTAP == 'true')
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
