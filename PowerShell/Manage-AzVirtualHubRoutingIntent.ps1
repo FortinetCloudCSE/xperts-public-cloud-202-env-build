@@ -22,7 +22,7 @@
 		./Manage-AzVirtualHubRoutingIntent.ps1 -ResourceGroups @($(Get-AzResourceGroup -Name vwan[2-3][0-9]-training)) -Delete
 
 		Get-AzResourceGroup -Name <-- supports regex
-		The regex in the example above will get resource groups named vwan20-training, vwan21-training, ..., vwan39-training
+		The regex in the example above will get resource groups named vwan20-training, vwan20-training, ..., vwan39-training
 #>
 
 param(

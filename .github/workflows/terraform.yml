@@ -3,6 +3,11 @@ name: Terraform Azure Deployment - Public Cloud 202 Env Build
 on:
   workflow_dispatch:
     inputs:
+      UserPrefix:
+        description: 'Prefix for the usernames, this will also be used for the state file and resource group naming.'
+        required: true
+        default: '0'
+        type: string
       UserCount:
         description: 'Number of users and environments to deploy (1-99), recommend only 15 per run. A count of 0 will destroy all users and environments.'
         required: true
@@ -29,7 +34,7 @@ jobs:
     steps:
       - name: ENV Build Values
         run: |
-
+          echo "user_prefix:           ${{ github.event.inputs.UserPrefix }}"
           echo "user_count:            ${{ github.event.inputs.UserCount }}"
           echo "user_start:            ${{ github.event.inputs.UserStart }}"
           echo "username_prefix:       ${{ vars.ENV_USERNAME_PREFIX }}"
@@ -48,7 +53,7 @@ jobs:
           terraform_version: 1.13.3
 
       - name: Azure Login
-        uses: azure/login@v3
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -104,7 +109,7 @@ jobs:
 
       - name: Azure Re-Login
         if: (github.event.inputs.RunTAP == 'true')
-        uses: azure/login@v3
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -112,7 +117,7 @@ jobs:
           enable-AzPSSession: true
 
       - name: PowerShell New User TAP
-        uses: azure/powershell@v3
+        uses: azure/powershell@v2
         if: (github.event.inputs.RunTAP == 'true')
         with:
           inlineScript: |
