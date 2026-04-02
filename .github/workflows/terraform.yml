@@ -6,7 +6,7 @@ on:
       UserPrefix:
         description: 'Prefix for the usernames, this will also be used for the state file and resource group naming.'
         required: true
-        default: '0'
+        default: ''
         type: string
       UserCount:
         description: 'Number of users and environments to deploy (1-99), recommend only 15 per run. A count of 0 will destroy all users and environments.'
@@ -53,7 +53,7 @@ jobs:
           terraform_version: 1.13.3
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -63,7 +63,7 @@ jobs:
       - name: Terraform Init
         id: init
         working-directory: ./terraform
-        run: terraform init -no-color -backend-config="resource_group_name=${{ secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME }}" -backend-config="storage_account_name=${{ secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ secrets.BACKEND_AZURE_STORAGE_CONTAINER_NAME }}"
+        run: terraform init -no-color -backend-config="resource_group_name=${{ secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME }}" -backend-config="storage_account_name=${{ secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ secrets.BACKEND_AZURE_STORAGE_CONTAINER_NAME }}" -backend-config="key=${{ github.event.inputs.UserPrefix }}.terraform.tfstate"
 
       - name: Terraform Validate
         id: validate
@@ -109,7 +109,7 @@ jobs:
 
       - name: Azure Re-Login
         if: (github.event.inputs.RunTAP == 'true')
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -117,7 +117,7 @@ jobs:
           enable-AzPSSession: true
 
       - name: PowerShell New User TAP
-        uses: azure/powershell@v2
+        uses: azure/powershell@v3
         if: (github.event.inputs.RunTAP == 'true')
         with:
           inlineScript: |

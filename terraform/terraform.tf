@@ -10,7 +10,7 @@ terraform {
     }
   }
   backend "azurerm" {
-    key      = "${var.username_prefix}/terraform.tfstate"
+    #key      = "${var.username_prefix}/terraform.tfstate"
     use_oidc = true
   }
 
