@@ -1,0 +1,154 @@
+name: Azure Deployment - Public Cloud 302 Env Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      UserNamePrefix:
+        description: 'Prefix for the usernames, this will also be used for the state file and resource group naming.'
+        required: true
+        type: string
+      UserCount:
+        description: 'Number of users and environments to deploy (1-99), recommend only 15 per run. A count of 0 will destroy all users and environments.'
+        required: true
+        default: '0'
+        type: string
+      UserStart:
+        description: 'Starting index for user numbering'
+        required: false
+        default: '20'
+        type: string
+      TerraformApply:
+        description: 'Terraform Apply, if false only the Terraform Plan will be executed (true/false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - false
+          - true
+      RunTAP:
+        description: 'Create Temporary Access Passes for new users (true/false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - false
+          - true
+jobs:
+  ENV_BUILD:
+    permissions:
+      id-token: write
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ENV Build Values
+        run: |
+          echo "username_prefix:      ${{ github.event.inputs.UserNamePrefix }}"
+          echo "user_count:            ${{ github.event.inputs.UserCount }}"
+          echo "user_start:            ${{ github.event.inputs.UserStart }}"
+          echo "user_principal_domain: ${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}"
+          echo "rg_suffix:             ${{ vars.ENV_RG_SUFFIX }}"
+          echo "location:              ${{ vars.ENV_LOCATION }}"
+          echo "vm_username:           ${{ vars.ENV_VM_USERNAME }}"
+          echo "password:              ${{ vars.ENV_BASIC_PASSWORD }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Terraform Init
+        id: init
+        working-directory: ./azure-302
+        run: terraform init -no-color -backend-config="resource_group_name=${{ secrets.BACKEND_AZURE_RESOURCE_GROUP_NAME }}" -backend-config="storage_account_name=${{ secrets.BACKEND_AZURE_STORAGE_ACCOUNT_NAME }}" -backend-config="container_name=${{ secrets.BACKEND_AZURE_STORAGE_CONTAINER_NAME }}" -backend-config="key=${{ github.event.inputs.UserNamePrefix }}.terraform.tfstate"
+
+      - name: Terraform Validate
+        id: validate
+        working-directory: ./azure-302
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ./azure-302
+        run: terraform plan -no-color -out=tfplan
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_vm_username: ${{ vars.ENV_VM_USERNAME }}
+          TF_VAR_username_prefix: ${{ github.event.inputs.UserNamePrefix }}
+          TF_VAR_user_count: ${{ github.event.inputs.UserCount }}
+          TF_VAR_user_start: ${{ github.event.inputs.UserStart }}
+          TF_VAR_rg_suffix: ${{ vars.ENV_RG_SUFFIX }}
+          TF_VAR_location: ${{ vars.ENV_LOCATION }}
+          TF_VAR_password: ${{ vars.ENV_BASIC_PASSWORD }}
+          TF_VAR_user_principal_domain: ${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}
+          TF_VAR_public_cloud_group_object_id: ${{ secrets.AZURE_PUBLIC_CLOUD_GROUP_OBJECT_ID }}
+          TF_VAR_fortiflexvm_config_id: ${{ secrets.FORTIFLEXVM_CONFIG_ID }}
+          TF_VAR_fortiflexvm_program_serial_number: ${{ secrets.FORTIFLEXVM_PROGRAM_SERIAL_NUMBER }}
+          TF_VAR_fortiflex_access_username: ${{ secrets.FORTIFLEX_ACCESS_USERNAME }}
+          TF_VAR_fortiflex_access_password: ${{ secrets.FORTIFLEX_ACCESS_PASSWORD }}
+          TF_VAR_fortiflex_serial_numbers: ${{ vars.ENV_FORTIFLEX_SERIAL_NUMBERS }}
+
+      - name: Terraform Apply
+        if: (github.event.inputs.TerraformApply == 'true')
+        id: apply
+        working-directory: ./azure-302
+        run: terraform apply -auto-approve -parallelism=20 -no-color tfplan
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_vm_username: ${{ vars.ENV_VM_USERNAME }}
+          TF_VAR_username_prefix: ${{ github.event.inputs.UserNamePrefix }}
+          TF_VAR_user_count: ${{ github.event.inputs.UserCount }}
+          TF_VAR_user_start: ${{ github.event.inputs.UserStart }}
+          TF_VAR_rg_suffix: ${{ vars.ENV_RG_SUFFIX }}
+          TF_VAR_location: ${{ vars.ENV_LOCATION }}
+          TF_VAR_password: ${{ vars.ENV_BASIC_PASSWORD }}
+          TF_VAR_user_principal_domain: ${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}
+          TF_VAR_public_cloud_group_object_id: ${{ secrets.AZURE_PUBLIC_CLOUD_GROUP_OBJECT_ID }}
+          TF_VAR_fortiflexvm_config_id: ${{ secrets.FORTIFLEXVM_CONFIG_ID }}
+          TF_VAR_fortiflexvm_program_serial_number: ${{ secrets.FORTIFLEXVM_PROGRAM_SERIAL_NUMBER }}
+          TF_VAR_fortiflex_access_username: ${{ secrets.FORTIFLEX_ACCESS_USERNAME }}
+          TF_VAR_fortiflex_access_password: ${{ secrets.FORTIFLEX_ACCESS_PASSWORD }}
+          TF_VAR_fortiflex_serial_numbers: ${{ vars.ENV_FORTIFLEX_SERIAL_NUMBERS }}
+
+      - name: Terraform Output
+        id: output
+        working-directory: ./azure-302
+        run: terraform output -no-color
+
+      - name: Azure Re-Login
+        if: (github.event.inputs.RunTAP == 'true')
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: PowerShell New User TAP
+        uses: azure/powershell@v3
+        if: (github.event.inputs.RunTAP == 'true')
+        with:
+          inlineScript: |
+            $token = (Get-AzAccessToken -ResourceTypeName MSGraph -AsSecureString -ErrorAction Stop).token
+            $null = Connect-MgGraph -AccessToken $token -ErrorAction Stop
+
+            $StartDateTime = (Get-Date)
+            (${{ github.event.inputs.UserStart }})..(${{ github.event.inputs.UserStart }} + ${{ github.event.inputs.UserCount }} - 1) | ForEach-Object { 
+            if ($_ -lt 10) {
+                $userNum = $_.ToString("D2")
+            } else {
+                $userNum = $_.ToString()
+            }
+            Write-Host "${{ github.event.inputs.UserNamePrefix }}$userNum${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}," (New-MgUserAuthenticationTemporaryAccessPassMethod -UserId "${{ github.event.inputs.UserNamePrefix }}$userNum${{ vars.ENV_USER_PRINCIPAL_DOMAIN }}" -LifetimeInMinutes (5 * 1440) -StartDateTime $StartDateTime).TemporaryAccessPass
+            }
+          azPSVersion: "latest"
